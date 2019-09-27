@@ -4,7 +4,7 @@ class MPL:
 
     """ A Multilayered Perceptron with a single hidden layer """
 
-    def __init__(self, ineuron_count, hneuron_count, oneuron_count, eta, momentum, max_iterations):
+    def __init__(self, ineuron_count, hneuron_count, oneuron_count, activation_type, eta, momentum, max_iterations):
 
         """
         Initializaes a new Multilayered Perceptions
@@ -21,14 +21,26 @@ class MPL:
         self.eta = eta
         self.max_iterations = max_iterations
         self.alpha = momentum
+        self.beta = 1.0 # Beta for activation
+        self.activation_type = activation_type
 
     def activation(self, neuron_values):
 
         """ Using a sigmoid function determine whether or not a neuron fires """
 
-        activation = lambda x: np.exp
+        ## Softmax activation functions
+        def softmax(x):
+            normalizers = np.sum(np.exp(outpus), axis = 1) * np.ones((1, np.shape(outputs)[0]))
+            return np.transpose(np.transpose(np.exp(outputs)) / normalizers)
 
-        return np.array([(np.tanh(neuron_values[i]) + 1) / 2 for i in range(neuron_values.size)])
+        activation_funcs = {
+            "linear"    : lambda x : x,
+            "logistic"  : lambda x: 1.0 / (1.0 + np.exp(-self.beta * x)),
+            "logistic2" : lambda x: (np.tanh(x) + 1.0) / 2.0,
+            "softmax"   : softmax
+        }
+
+        return activation_funcs[self.activation_type](neuron_values)
 
     def eval(self, input):
 
@@ -90,6 +102,9 @@ class MPL:
             self.ih_weights += update_hidden
             self.ho_weights += update_output
 
+            if current_iteration % 1000 == 0:
+                print(f"Current Iteration: {current_iteration} Average Error : {(sum(abs(targets - outputs)) / targets.size)[0]}")
+
 
     def train_recur(self, inputs, targets, current_iteration):
 
@@ -102,9 +117,6 @@ class MPL:
         """
 
 
-
-
-
 if __name__ == '__main__':
 
     ## Data
@@ -112,12 +124,19 @@ if __name__ == '__main__':
     xor_data = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 0]])
 
     ## Perceptron
-    perceptron = MPL(2, 3, 1, 0.25, 0.9, 1001)
-
-    #print("Hidden Weights\n", perceptron.ih_weights)
-    #print("Output Weights\n", perceptron.ho_weights)
-
+    print("Logical AND MPL")
+    perceptron = MPL(2, 3, 1, "logistic", 0.25, 0.9, 1001)
     perceptron.train(and_data[:,:-1], and_data[:,-1])
+
+    print(perceptron.eval([0, 0]))
+    print(perceptron.eval([1, 0]))
+    print(perceptron.eval([0, 1]))
+    print(perceptron.eval([1, 1]))
+
+    print("")
+    print("Logical XOR MPL")
+    perceptron = MPL(2, 3, 1, "logistic", 0.25, 0.9, 5001)
+    perceptron.train(xor_data[:,:-1], xor_data[:,-1])
 
     print(perceptron.eval([0, 0]))
     print(perceptron.eval([1, 0]))
