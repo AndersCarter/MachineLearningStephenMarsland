@@ -4,7 +4,7 @@ class MPL:
 
     """ A Multilayered Perceptron with a single hidden layer """
 
-    def __init__(self, ineuron_count, hneuron_count, oneuron_count, eta, max_iterations):
+    def __init__(self, ineuron_count, hneuron_count, oneuron_count, eta, momentum, max_iterations):
 
         """
         Initializaes a new Multilayered Perceptions
@@ -20,6 +20,7 @@ class MPL:
         self.ho_weights = np.random.rand(hneuron_count + 1, oneuron_count) * (2 / np.sqrt(hneuron_count + 1)) - (1 / np.sqrt(hneuron_count) + 1)
         self.eta = eta
         self.max_iterations = max_iterations
+        self.alpha = momentum
 
     def activation(self, neuron_values):
 
@@ -56,6 +57,10 @@ class MPL:
         targets - Numpy Array Integer    - Input targets
         """
 
+        ## Initialization
+        update_hidden = np.zeros(np.shape(self.ih_weights))
+        update_output = np.zeros(np.shape(self.ho_weights))
+
         ## Ensure Targets is a column vector
         targets = targets[:, np.newaxis]
 
@@ -78,8 +83,8 @@ class MPL:
             delta_hidden = biased_hidden * (1.0 - biased_hidden) * np.matmul(delta_output, np.transpose(self.ho_weights))
 
             ## Calculate Updates
-            update_hidden = self.eta * np.matmul(np.transpose(biased_inputs), delta_hidden[:,:-1])
-            update_output = self.eta * np.matmul(np.transpose(biased_hidden), delta_output)
+            update_hidden = self.eta * np.matmul(np.transpose(biased_inputs), delta_hidden[:,:-1]) + self.alpha * update_hidden
+            update_output = self.eta * np.matmul(np.transpose(biased_hidden), delta_output) + self.alpha * update_output
 
             ## Apply Updates
             self.ih_weights += update_hidden
@@ -107,7 +112,7 @@ if __name__ == '__main__':
     xor_data = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 0]])
 
     ## Perceptron
-    perceptron = MPL(2, 3, 1, 0.25, 10000)
+    perceptron = MPL(2, 3, 1, 0.25, 0.9, 1001)
 
     #print("Hidden Weights\n", perceptron.ih_weights)
     #print("Output Weights\n", perceptron.ho_weights)
