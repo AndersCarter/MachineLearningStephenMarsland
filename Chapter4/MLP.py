@@ -67,8 +67,6 @@ class MLP:
 
         ## Evaluate Hidden Neurons
         self.hidden = np.dot(inputs, self.input_weights)
-        #print("Inputs:\n", inputs)
-        #print("Hidden:\n", self.hidden)
         self.hidden = 1.0 / (1.0 + np.exp(-self.beta * self.hidden))
         self.hidden = np.concatenate((self.hidden,-np.ones((np.shape(inputs)[0],1))),axis=1)
 
