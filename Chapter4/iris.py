@@ -8,7 +8,11 @@ if __name__ == "__main__":
     ## Create Iris.data filepath
     directory = os.path.dirname(os.path.abspath(__file__))
     iris_fp = os.path.join(directory, "iris.data")
-    if not os.path.isfile(iris_fp): raise Exeception("This Script requires the download of the Iris Dataset from the UCI Machine Learning repository found here 'https://archive.ics.uci.edu/ml/machine-learning-databases/iris/'")
+    if not os.path.isfile(iris_fp): raise Exeception("""
+    This Script requires the download of the Iris Dataset from the UCI Machine Learning
+    repository found here 'https://archive.ics.uci.edu/ml/machine-learning-databases/iris/'
+    The dataset is assumed to be in the same directory as the script.
+    """)
 
     ## Create Dataframe
     headers = ["sepal_length", "sepal_width", "petal_length", "petal_width", "class"]
