@@ -24,7 +24,7 @@ def plot_function(x, t):
 
 if __name__ == "__main__":
 
-    ## Data
+    ## Data a sine wave with guassian noise
     x = np.linspace(0, 1, 40).reshape((1, 40))
     t = np.sin(2 * np.pi * x) + np.cos(4 * np.pi * x) + np.random.randn(40) * 0.2
     x = x.T
@@ -43,4 +43,7 @@ if __name__ == "__main__":
 
     ## MLP
     p = MLP(1, 3, 1, activation_type = "linear")
-    p.train(train, trainTarget, 1001)
+    p.train(train, trainTarget, 10001, valid_set = valid, valid_targets = validTarget)
+
+    #p = MLP(1, 3, 1, activation_type = "linear")
+    #p.train(train, trainTarget, 10001)#, valid_set = valid, valid_targets = validTarget)

@@ -35,29 +35,27 @@ class MLP:
         self.hidden = None
 
         ## Validation Error Queue
-        self.valid_error = [100002, 100001]
+        self.valid_error = []
 
-        ## Validation sets
-        self.valid_set = None
-        self.valid_targets = None
-        if "valid_set" in kwargs and "valid_targets" in kwargs:
-            self.valid_set = np.concatenate((kwargs["valid_set"], -np.ones((np.shape(kwargs["valid_set"])[0],1))),axis=1)
-            self.valid_targets = np.concatenate((kwargs["valid_targets"], -np.ones((np.shape(kwargs["valid_targets"])[0],1))),axis=1)
 
-    def stop_early(self):
+    def stop_early(self, valid_set, valid_targets):
 
         """ Returns true if the error in the validation set begins to increase """
 
-        ## Error Detection
-        if self.valid_set != None != self.valid_targets != None: raise Exception("Both 'valid_set' and 'valid_targets' kwargs must be used when constructing the MLP object to use early stopping.")
+        ## Calculate Validation Set Error
+        valid_output = self.forward(valid_set)
+        valid_error = 0.5 * np.sum((valid_output - valid_targets) ** 2)
+        self.valid_error += [valid_error]
 
-        valid_output = self.forward(self.valid_set)
-        valid_error = 0.5 * np.sum((self.valid_targets - self.valid_set) ** 2)
+        ## Return if Validation has not run enough to determine stopping
+        if len(self.valid_error) < 3: return False
 
-        if (valid_error - self.valid_error[0]) > 0.001 and (self.valid_error[0] - self.valid_error[1]): return True
+        ## Returns true if the error is increasing across two validations
+        if (self.valid_error[1] - self.valid_error[2]) > 0.001 or (self.valid_error[0] - self.valid_error[1]) > 0.001:
+            self.valid_error = self.valid_error[1:] ## Update Validation
+            return False
 
-        self.valid_error = [valid_error] + [self.valid_error[0]]
-        return False
+        return True
 
 
 
@@ -72,12 +70,15 @@ class MLP:
         return 1 if self.forward(input)[0,0] > 0.5 else 0
 
 
-    def forward(self, inputs):
+    def forward(self, inputs, **kwargs):
         """
         Moves the network forward on the given input.
 
         Arguments
         inputs | Numpy Array : The Inputs to evaluate
+
+        Kwargs
+        save_hidden | Boolean : Flag for whether or not the hidden neuron values are saved
 
         """
 
@@ -93,16 +94,19 @@ class MLP:
         }
 
         ## Evaluate Hidden Neurons
-        self.hidden = np.dot(inputs, self.input_weights)
-        self.hidden = 1.0 / (1.0 + np.exp(-self.beta * self.hidden))
-        self.hidden = np.concatenate((self.hidden,-np.ones((np.shape(inputs)[0],1))),axis=1)
+        hidden = np.dot(inputs, self.input_weights)
+        hidden = 1.0 / (1.0 + np.exp(-self.beta * hidden))
+        hidden = np.concatenate((hidden,-np.ones((np.shape(inputs)[0],1))),axis=1)
+
+        ## Save Hidden Neurons
+        if "save_hidden" in kwargs and kwargs["save_hidden"]: self.hidden = hidden
 
         ## Evaluate Output Neurons
-        output = np.dot(self.hidden, self.hidden_weights)
+        output = np.dot(hidden, self.hidden_weights)
         return activation_funcs[self.activation_type](output)
 
 
-    def train(self, inputs, targets, max_iterations = 1000):
+    def train(self, inputs, targets, max_iterations = 1000, **kwargs):
 
         """
         Trains the algorithm with the given inputs and targets
@@ -120,10 +124,17 @@ class MLP:
         update_input = np.zeros(self.input_weights.shape)
         update_hidden = np.zeros(self.hidden_weights.shape)
 
+        ## Create Valid Set
+        valid_set = np.array([])
+        valid_targets = np.array([])
+        if "valid_set" in kwargs and "valid_targets" in kwargs:
+            valid_set = np.concatenate((kwargs["valid_set"], -np.ones((np.shape(kwargs["valid_set"])[0],1))),axis=1)
+            valid_targets = np.concatenate((kwargs["valid_targets"], -np.ones((np.shape(kwargs["valid_targets"])[0],1))),axis=1)
+
         for i in range(max_iterations):
 
             ## Evaluate Inputs
-            outputs = self.forward(inputs)
+            outputs = self.forward(inputs, save_hidden = True)
 
             ## Calculate Error
             error = 0.5 * np.sum((outputs - targets) ** 2)
@@ -131,8 +142,8 @@ class MLP:
                 print(f"Iteration: {i} Error: {error}")
 
                 ## Stops Early if Validation Set error begins to increase
-                if self.valid_set != None and self.stop_early():
-                    print(f"Stopped Early")
+                if valid_set.size != 0 and self.stop_early(valid_set, valid_targets):
+                    print("Stopped Early")
                     return
 
             ## Changes for different types of output nerurons
