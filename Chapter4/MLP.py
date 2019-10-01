@@ -39,8 +39,10 @@ class MLP:
         """ Evaluates a single input to the network and returns the output """
 
         ## Add bias to input
-        input = np.insert(input, 0, -1)
-        return self.forward(input)
+        input = np.array(input) if type(input) != np.array else input
+        input = np.concatenate((input, [-1]))
+        input = input.reshape((1, input.size))
+        return 1 if self.forward(input)[0,0] > 0.5 else 0
 
 
     def forward(self, inputs):
@@ -64,12 +66,14 @@ class MLP:
         }
 
         ## Evaluate Hidden Neurons
-        self.hidden = np.matmul(inputs, self.input_weights)
+        self.hidden = np.dot(inputs, self.input_weights)
+        #print("Inputs:\n", inputs)
+        #print("Hidden:\n", self.hidden)
         self.hidden = 1.0 / (1.0 + np.exp(-self.beta * self.hidden))
-        self.hidden = np.insert(self.hidden, 0, -1, axis = 1) if len(self.hidden.shape) > 1 else np.insert(self.hidden, 0, -1)
+        self.hidden = np.concatenate((self.hidden,-np.ones((np.shape(inputs)[0],1))),axis=1)
 
         ## Evaluate Output Neurons
-        output = np.matmul(self.hidden, self.hidden_weights)
+        output = np.dot(self.hidden, self.hidden_weights)
         return activation_funcs[self.activation_type](output)
 
 
@@ -85,7 +89,7 @@ class MLP:
         """
 
         ## Add Bias Term to Inputs
-        inputs = np.insert(inputs, 0, -1, axis = 1)
+        inputs = np.concatenate((inputs, -np.ones((inputs.shape[0], 1))), axis = 1)
 
         ## Initialize Update Arrays
         update_input = np.zeros(self.input_weights.shape)
@@ -120,16 +124,31 @@ class MLP:
 
 if __name__ == "__main__":
 
+    np.random.seed(1234)
 
     ## Logical AND Network
+    print("Logical AND")
     and_inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     and_targets = np.array([0, 0, 0, 1]).reshape(4, 1)
 
     p = MLP(2, 3, 1)
     p.train(and_inputs, and_targets, 1001)
 
-    print(p.input_weights)
-    #print(p.eval([0, 0]))
-    #print(p.eval([0, 1]))
-    #print(p.eval([1, 0]))
-    #print(p.eval([1, 1]))
+    print(f"Inputs: 0 0 Eval: {p.eval([0, 0])}")
+    print(f"Inputs: 1 0 Eval: {p.eval([1, 0])}")
+    print(f"Inputs: 0 1 Eval: {p.eval([0, 1])}")
+    print(f"Inputs: 1 1 Eval: {p.eval([1, 1])}")
+    print("")
+
+    ## Logical XOR Network
+    print("Logical XOR")
+    xor_inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    xor_targets = np.array([0, 1, 1, 0]).reshape(4, 1)
+
+    p = MLP(2, 3, 1)
+    p.train(xor_inputs, xor_targets, 5001)
+
+    print(f"Inputs: 0 0 Eval: {p.eval([0, 0])}")
+    print(f"Inputs: 1 0 Eval: {p.eval([1, 0])}")
+    print(f"Inputs: 0 1 Eval: {p.eval([0, 1])}")
+    print(f"Inputs: 1 1 Eval: {p.eval([1, 1])}")
