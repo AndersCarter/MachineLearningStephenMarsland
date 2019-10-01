@@ -44,6 +44,3 @@ if __name__ == "__main__":
     ## MLP
     p = MLP(1, 3, 1, activation_type = "linear")
     p.train(train, trainTarget, 10001, valid_set = valid, valid_targets = validTarget)
-
-    #p = MLP(1, 3, 1, activation_type = "linear")
-    #p.train(train, trainTarget, 10001)#, valid_set = valid, valid_targets = validTarget)
