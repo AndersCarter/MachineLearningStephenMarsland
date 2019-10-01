@@ -37,26 +37,33 @@ class MLP:
         ## Validation Error Queue
         self.valid_error = []
 
+    def confusion_matrix(self, inputs, targets):
 
-    def stop_early(self, valid_set, valid_targets):
+        """ Returns the Confusion Matrix for the MPL """
 
-        """ Returns true if the error in the validation set begins to increase """
+        ## Add Bias to inputs
+        inputs = np.concatenate((inputs, -np.ones((inputs.shape[0], 1))), axis = 1)
 
-        ## Calculate Validation Set Error
-        valid_output = self.forward(valid_set)
-        valid_error = 0.5 * np.sum((valid_output - valid_targets) ** 2)
-        self.valid_error += [valid_error]
+        ## Evaluate
+        outputs = self.forward(inputs)
 
-        ## Return if Validation has not run enough to determine stopping
-        if len(self.valid_error) < 3: return False
+        class_count = targets.shape[1]
 
-        ## Returns true if the error is increasing across two validations
-        if (self.valid_error[1] - self.valid_error[2]) > 0.001 or (self.valid_error[0] - self.valid_error[1]) > 0.001:
-            self.valid_error = self.valid_error[1:] ## Update Validation
-            return False
+        if class_count == 1:
+            class_count = 2
+            outputs = np.where(outputs > 0.5, 1, 0)
+        else:
+            outputs = np.argmax(outputs, 1)
+            targets = np.argmax(targets, 1)
 
-        return True
+        confusion = np.zeros((class_count, class_count))
+        for i in range(class_count):
+            for j in range(class_count):
+                confusion[i, j] = np.sum(np.where(outputs == i, 1, 0) * np.where(targets == j, 1, 0))
 
+        print("Confusion Matrix")
+        print(confusion)
+        print(f"Percentage Correct: {np.trace(confusion) / np.sum(confusion) * 100}")
 
 
     def eval(self, input):
@@ -105,6 +112,25 @@ class MLP:
         output = np.dot(hidden, self.hidden_weights)
         return activation_funcs[self.activation_type](output)
 
+    def stop_early(self, valid_set, valid_targets):
+
+        """ Returns true if the error in the validation set begins to increase """
+
+        ## Calculate Validation Set Error
+        valid_output = self.forward(valid_set)
+        valid_error = 0.5 * np.sum((valid_output - valid_targets) ** 2)
+        self.valid_error += [valid_error]
+
+        ## Return if Validation has not run enough to determine stopping
+        if len(self.valid_error) < 3: return False
+
+        ## Returns true if the error is increasing across two validations
+        if (self.valid_error[1] - self.valid_error[2]) > 0.001 or (self.valid_error[0] - self.valid_error[1]) > 0.001:
+            self.valid_error = self.valid_error[1:] ## Update Validation
+            return False
+
+        return True
+
 
     def train(self, inputs, targets, max_iterations = 1000, **kwargs):
 
@@ -115,6 +141,10 @@ class MLP:
         inputs         | Numpy Array : A Matrix of all training inputs
         targets        | Numpy Array : An Array of all target values that correspond with the given inputs
         max_iterations | Integer     : The maximum number of iterations that the network will train
+
+        Kwargs
+        valid_set     | Numpy Array-like : The validation set for the training algorithm
+        valid_targets | Numpy Array-like : The targets for the validation set
         """
 
         ## Add Bias Term to Inputs
@@ -129,7 +159,7 @@ class MLP:
         valid_targets = np.array([])
         if "valid_set" in kwargs and "valid_targets" in kwargs:
             valid_set = np.concatenate((kwargs["valid_set"], -np.ones((np.shape(kwargs["valid_set"])[0],1))),axis=1)
-            valid_targets = np.concatenate((kwargs["valid_targets"], -np.ones((np.shape(kwargs["valid_targets"])[0],1))),axis=1)
+            valid_targets = kwargs["valid_targets"]
 
         for i in range(max_iterations):
 
