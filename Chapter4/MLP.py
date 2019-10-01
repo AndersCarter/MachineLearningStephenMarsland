@@ -34,6 +34,33 @@ class MLP:
         ## Working Hidden Layer
         self.hidden = None
 
+        ## Validation Error Queue
+        self.valid_error = [100002, 100001]
+
+        ## Validation sets
+        self.valid_set = None
+        self.valid_targets = None
+        if "valid_set" in kwargs and "valid_targets" in kwargs:
+            self.valid_set = np.concatenate((kwargs["valid_set"], -np.ones((np.shape(kwargs["valid_set"])[0],1))),axis=1)
+            self.valid_targets = np.concatenate((kwargs["valid_targets"], -np.ones((np.shape(kwargs["valid_targets"])[0],1))),axis=1)
+
+    def stop_early(self):
+
+        """ Returns true if the error in the validation set begins to increase """
+
+        ## Error Detection
+        if self.valid_set != None != self.valid_targets != None: raise Exception("Both 'valid_set' and 'valid_targets' kwargs must be used when constructing the MLP object to use early stopping.")
+
+        valid_output = self.forward(self.valid_set)
+        valid_error = 0.5 * np.sum((self.valid_targets - self.valid_set) ** 2)
+
+        if (valid_error - self.valid_error[0]) > 0.001 and (self.valid_error[0] - self.valid_error[1]): return True
+
+        self.valid_error = [valid_error] + [self.valid_error[0]]
+        return False
+
+
+
     def eval(self, input):
 
         """ Evaluates a single input to the network and returns the output """
@@ -56,7 +83,7 @@ class MLP:
 
         def softmax(x):
             normalisers = np.sum(np.exp(x), axis = 1) * np.ones((1, x.shape[0]))
-            return np.transpose(np.transpose(np.exp(x)) / normaliser)
+            return np.transpose(np.transpose(np.exp(x)) / normalisers)
 
         ## Activation Functions
         activation_funcs = {
@@ -102,6 +129,11 @@ class MLP:
             error = 0.5 * np.sum((outputs - targets) ** 2)
             if i % 100 == 0:
                 print(f"Iteration: {i} Error: {error}")
+
+                ## Stops Early if Validation Set error begins to increase
+                if self.valid_set != None and self.stop_early():
+                    print(f"Stopped Early")
+                    return
 
             ## Changes for different types of output nerurons
             neuron_derivatives = {
