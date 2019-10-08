@@ -35,12 +35,12 @@ if __name__ == "__main__":
     eval_dat = np.ndarray.flatten(np.array([p.eval(val) for val in test]))
 
     ## Actual Data
-    plot.line(x_dat, t_dat, legend = "Actual Sine Wave")
-    plot.circle(x_dat, t_dat, legend = "Actual Sine Wave")
-    plot.line(test_dat, actual_dat, legend = "Actual Test Data", color = "red")
-    plot.circle(test_dat, actual_dat, legend = "Actual Test Data",color = "red")
-    plot.line(test_dat, eval_dat, legend = "MLP Output", color = "green")
-    plot.circle(test_dat, eval_dat, legend = "MLP Output", color = "green")
+    plot.line(x_dat, t_dat, legend = "Full Input Sine Wave")
+    plot.circle(x_dat, t_dat, legend = "Full Input Sine Wave")
+    plot.line(test_dat, actual_dat, legend = "Test Set With Target Values", color = "red")
+    plot.circle(test_dat, actual_dat, legend = "Test Set With Target Values",color = "red")
+    plot.line(test_dat, eval_dat, legend = "Test Set with MLP Output", color = "green")
+    plot.circle(test_dat, eval_dat, legend = "Test Set with MLP Output", color = "green")
 
     ## Legend
     plot.legend.click_policy = "hide"
