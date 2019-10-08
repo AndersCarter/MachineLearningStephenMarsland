@@ -5,14 +5,23 @@ import numpy as np
 class Perceptron:
 
     ## Initializes a new Perception Object
-    def __init__(self):
-        self.weights = None
+    def __init__(self, i_count, o_count, **kwargs):
+
+        """
+            Arguments
+            i_count | Integer : The number of input nodes
+            o_count | Integer : The number of output nodes
+
+            Keyword Arguments
+            eta | Float : The learning rate
+        """
+
+        ## Initialize Weights
+        self.weights = np.random.rand(i_count + 1, o_count) * 0.1 - 0.05
+        self.eta = 0.25 if "eta" not in kwargs else kwargs["eta"]
 
     ## Trains the Perceptron
-    def train(self, inputs, targets, eta, maxIterations):
-
-        # Initializes the weights
-        self.weights = np.random.rand(inputs.shape[1] + 1, targets.shape[1]) * 0.1 - 0.05
+    def train(self, inputs, targets, maxIterations):
 
         # Add the bias to the inputs
         inputs = np.insert(inputs, 0, -1, axis = 1)
@@ -32,7 +41,7 @@ class Perceptron:
             print("")
 
             # Updage Weights
-            self.weights -= eta * np.dot(np.transpose(inputs), activations - targets)
+            self.weights -= self.eta * np.dot(np.transpose(inputs), activations - targets)
 
     ## Evals the Perceptron
     def eval(self, input):

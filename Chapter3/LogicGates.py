@@ -9,8 +9,8 @@ if __name__ == "__main__":
     targets = np.array([[0], [1], [1], [1]])
 
     # Perceptron
-    p = Perceptron()
-    p.train(inputs, targets, 0.25, 6)
+    p = Perceptron(2, 1)
+    p.train(inputs, targets, 6)
 
     print("Eval")
     print(f"0 0: {p.eval([0, 0])}")
@@ -23,8 +23,8 @@ if __name__ == "__main__":
     inputs = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 0]])
     targets = np.array([[0], [1], [1], [0]])
 
-    p = Perceptron()
-    p.train(inputs, targets, 0.25, 15)
+    p = Perceptron(3, 1)
+    p.train(inputs, targets, 15)
 
     print("Eval")
     print(f"0 0 1: {p.eval([0, 0, 1])}")
