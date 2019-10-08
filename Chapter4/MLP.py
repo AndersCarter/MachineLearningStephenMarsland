@@ -73,8 +73,13 @@ class MLP:
         ## Add bias to input
         input = np.array(input) if type(input) != np.array else input
         input = np.concatenate((input, [-1]))
-        input = input.reshape((1, input.size))
-        return 1 if self.forward(input)[0,0] > 0.5 else 0
+        input = input.reshape((1, input.size))\
+
+        ## Regression Activations
+        if self.activation_type == "linear":
+            return self.forward(input)[0,0]
+        else:
+            return 1 if self.forward(input)[0,0] > 0.5 else 0
 
 
     def forward(self, inputs, **kwargs):

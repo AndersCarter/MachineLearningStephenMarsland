@@ -3,25 +3,6 @@ import numpy as np
 from MLP import MLP
 from bokeh.plotting import figure, output_file, save
 
-def plot_function(x, t):
-
-    """ Plot the function the MLP will try to learn """
-
-    ## Plot Figure
-    p = figure(title = "MLP DataSet")
-    p.circle(x, t)
-    p.line(x, t)
-    p.xaxis.axis_label = "x"
-    p.yaxis.axis_label = "t"
-
-    ## Output Filepath
-    directory = os.path.dirname(os.path.abspath(__file__))
-    fp = os.path.join(directory, "regression.html")
-
-    output_file(fp, mode = "inline")
-    save(p)
-
-
 if __name__ == "__main__":
 
     ## Data a sine wave with guassian noise
@@ -30,8 +11,6 @@ if __name__ == "__main__":
     x = x.T
     t = t.T
 
-    ## PLot Data
-    plot_function(np.ndarray.flatten(x.T), np.ndarray.flatten(t.T))
 
     ## Data Sets
     train = x[0::2,:]
@@ -44,3 +23,33 @@ if __name__ == "__main__":
     ## MLP
     p = MLP(1, 3, 1, activation_type = "linear")
     p.train(train, trainTarget, 10001, valid_set = valid, valid_targets = validTarget)
+
+    ## Bokeh plots
+    plot = figure(title = "MLP Random Sin Wave with Guassian Noise Added")
+
+    ## Plot data
+    x_dat = np.ndarray.flatten(x.T)
+    t_dat = np.ndarray.flatten(t.T)
+    test_dat = np.ndarray.flatten(test.T)
+    actual_dat = np.ndarray.flatten(testTarget.T)
+    eval_dat = np.ndarray.flatten(np.array([p.eval(val) for val in test]))
+
+    ## Actual Data
+    plot.line(x_dat, t_dat, legend = "Actual Sine Wave")
+    plot.circle(x_dat, t_dat, legend = "Actual Sine Wave")
+    plot.line(test_dat, actual_dat, legend = "Actual Test Data", color = "red")
+    plot.circle(test_dat, actual_dat, legend = "Actual Test Data",color = "red")
+    plot.line(test_dat, eval_dat, legend = "MLP Output", color = "green")
+    plot.circle(test_dat, eval_dat, legend = "MLP Output", color = "green")
+
+    ## Legend
+    plot.legend.click_policy = "hide"
+
+    ## Axis Labels
+    plot.xaxis.axis_label = "Input"
+    plot.yaxis.axis_label = "Target"
+
+    ## Output
+    directory = os.path.dirname(os.path.abspath(__file__))
+    output_file(os.path.join(directory, "regression.html"), mode = "inline")
+    save(plot)
